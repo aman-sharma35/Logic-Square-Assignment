@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Search</title>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12" id="header-wrapper">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12" id="header">
+                            <h2>Cafe Search</h2>
+                        </div>
+                        <div class="col-12" id="search-wrapper">
+                            <input type="text" placeholder="Search your favorite cafes!" id="input" onkeyup="search()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-12" id="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr class="table100-head">
+                                    <th class="column1">S No</th>
+                                    <th class="column2">Cafe Name</th>
+                                    <th class="column3">Address</th>
+                                    <th class="column4">Postal Code</th>
+                                    <th class="column5">Lat</th>
+                                    <th class="column6">Long</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function getCafes() {
+            try {
+                const responseCafes = await fetch('https://raw.githubusercontent.com/debojyoti/places-fake-rest-api/master/cafes.json');
+                const cafes = await responseCafes.json();
+                getPlaces(cafes);
+            } catch (error) {
+                console.error('Error fetching cafes:', error);
+            }
+        }
+
+        async function getPlaces(cafes) {
+            try {
+                const responsePlaces = await fetch('https://raw.githubusercontent.com/debojyoti/places-fake-rest-api/master/places.json');
+                const places = await responsePlaces.json();
+                merge(cafes, places);
+            } catch (error) {
+                console.error('Error fetching places:', error);
+            }
+        }
+
+        function merge(cafes, places) {
+            const cafe = cafes.cafes;
+            const place = places.places;
+            const array = [];
+
+            cafe.forEach(cafeItem => {
+                const matchingPlace = place.find(placeItem => placeItem.id === cafeItem.location_id);
+                if (matchingPlace) {
+                    const object = {
+                        "name": cafeItem.name,
+                        "locality": matchingPlace.locality,
+                        "postal_code": matchingPlace.postal_code,
+                        "long": matchingPlace.long,
+                        "lat": matchingPlace.lat
+                    };
+                    array.push(object);
+                }
+            });
+
+            displayCafes(array);
+        }
+
+        function displayCafes(cafes) {
+            const temp = cafes.map((cafe, index) => {
+                return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${cafe.name}</td>
+            <td>${cafe.locality}</td>
+            <td>${cafe.postal_code}</td>
+            <td>${cafe.long}</td>
+            <td>${cafe.lat}</td>
+          </tr>
+        `;
+            }).join('');
+
+            document.getElementById('data').innerHTML = temp;
+        }
+
+        function search() {
+            const dataFilter = document.getElementById('input').value.toUpperCase();
+            const tableRows = document.getElementById('data').getElementsByTagName('tr');
+
+            for (let i = 0; i < tableRows.length; i++) {
+                const td = tableRows[i].getElementsByTagName('td')[1];
+                if (td) {
+                    let textValue = td.textContent || td.innerHTML;
+                    if (textValue.toUpperCase().indexOf(dataFilter) > -1) {
+                        tableRows[i].style.display = "";
+                    } else {
+                        tableRows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        getCafes();
+    </script>
+</body>
+
+</html>
